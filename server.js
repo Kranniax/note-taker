@@ -66,7 +66,33 @@ app.post("/api/notes", (req, res) => {
     res.status(201).json(req.body);
   });
 });
+app.delete("/api/notes/:id", (req, res) => {
+  // console.log(req.params.id);
 
+  // Read json file
+  fs.readFile(path.join(__dirname, "./db/db.json"), (err, data) => {
+    if (err) throw err;
+    // Convert to Javascript object notation.
+    const jsonData = JSON.parse(data);
+    const updatedData = jsonData.filter((note) => note.id !== req.params.id);
+
+    // Check if a note was actually deleted
+    if (updatedData.length === jsonData.length) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+    // Update and write json file.
+    fs.writeFile(
+      path.join(__dirname, "./db/db.json"),
+      JSON.stringify(updatedData, null, 2),
+      (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Could not delete note" });
+        }
+        res.status(200).json({ message: "Note deleted successfully" });
+      }
+    );
+  });
+});
 // Serve notes page to client side.
 app.get("/notes", (req, res) => {
   res.sendFile(path.join(__dirname, "./public/notes.html"));
